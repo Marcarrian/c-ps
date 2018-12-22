@@ -10,6 +10,7 @@
 bool isProcessDir(const struct dirent *dirent);
 void handleProcessDir(const char *dirName);
 void openStatusFile(const char *fullPath, const char *dirName);
+char *trimWhitespace(char*);
 
 int main() {
   struct dirent *dirent;
@@ -59,7 +60,6 @@ void handleProcessDir(const char *dirName) {
   strcat(fullPath, "/status");
 
   // printf("fullPath %s \n", fullPath);
-
   openStatusFile(fullPath, dirName);
 }
 
@@ -75,10 +75,6 @@ void openStatusFile(const char *fullPath, const char *dirName) {
     exit(1);
   }
 
-  char names[1024];
-
-  unsigned int i = 0;
-
   char *nameResult;
   char *vmrssResult;
   
@@ -90,19 +86,40 @@ void openStatusFile(const char *fullPath, const char *dirName) {
       strcpy(name, line);
       nameResult = strtok(name, ":");
       nameResult = strtok(NULL, ":");
+      nameResult = trimWhitespace(nameResult);
     }
     
     if (strstr(line, "VmRSS")) {
       strcpy(vmrss, line);
       vmrssResult = strtok(vmrss, ":");
       vmrssResult = strtok(NULL, ":");
+      vmrssResult = trimWhitespace(vmrssResult);
     }
   }
-  printf("----------------------------------\n");
-  printf("pid: %s\n", dirName);
-  printf("name: %s\n", nameResult);
-  printf("vmrss: %s\n", vmrssResult);
-  printf("----------------------------------\n");
-    
+  printf("%s\t%s\t%s\n", dirName, nameResult, vmrssResult);
   fclose(statusFile);
+}
+
+/**
+ * https://stackoverflow.com/a/122721
+ * i dont get how end affects the str variale??
+ */
+char *trimWhitespace(char *str)
+{
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*str)) str++;
+
+  if(*str == 0)  // All spaces?
+    return str;
+  
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator character
+  end[1] = '\0';
+  
+  return str;
 }
