@@ -3,12 +3,13 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define DEBUG 1 // 0 for production
 
 bool isProcessDir(const struct dirent *dirent);
 void handleProcessDir(const char *dirName);
-void openStatusFile(const char *fullPath);
+void openStatusFile(const char *fullPath, const char *dirName);
 
 int main() {
   struct dirent *dirent;
@@ -57,15 +58,15 @@ void handleProcessDir(const char *dirName) {
   strcat(fullPath, dirName);
   strcat(fullPath, "/status");
 
-  printf("fullPath %s \n", fullPath);
+  // printf("fullPath %s \n", fullPath);
 
-  openStatusFile(fullPath);
+  openStatusFile(fullPath, dirName);
 }
 
 /**
  * Opens the status file at the given path.
  */
-void openStatusFile(const char *fullPath) {
+void openStatusFile(const char *fullPath, const char *dirName) {
   FILE *statusFile;
   char line[128];
 
@@ -74,9 +75,34 @@ void openStatusFile(const char *fullPath) {
     exit(1);
   }
 
+  char names[1024];
+
+  unsigned int i = 0;
+
+  char *nameResult;
+  char *vmrssResult;
+  
   while(fgets(line, sizeof line, statusFile) != NULL) {
-    printf("line %s", line);
+    char name[256];
+    char vmrss[256];
+      
+    if (strstr(line, "Name")) {
+      strcpy(name, line);
+      nameResult = strtok(name, ":");
+      nameResult = strtok(NULL, ":");
+    }
+    
+    if (strstr(line, "VmRSS")) {
+      strcpy(vmrss, line);
+      vmrssResult = strtok(vmrss, ":");
+      vmrssResult = strtok(NULL, ":");
+    }
   }
+  printf("----------------------------------\n");
+  printf("pid: %s\n", dirName);
+  printf("name: %s\n", nameResult);
+  printf("vmrss: %s\n", vmrssResult);
+  printf("----------------------------------\n");
     
   fclose(statusFile);
 }
