@@ -6,7 +6,9 @@
 
 #define DEBUG 1 // 0 for production
 
-bool isProcessDirectory(const struct dirent *dirent);
+bool isProcessDir(const struct dirent *dirent);
+void handleProcessDir(const char *dirName);
+void openStatusFile(const char *fullPath);
 
 int main() {
   struct dirent *dirent;
@@ -19,14 +21,15 @@ int main() {
   }
 
   while ((dirent = readdir(dir)) != NULL) {
-    bool isProcessDir = isProcessDirectory(dirent);
-    if (isProcessDir) {
+    bool isProcDir = isProcessDir(dirent);
+    if (isProcDir) {
       #if DEBUG
-      printf("found a process dir %s\n", dirent->d_name);
+      // printf("found a process dir %s\n", dirent->d_name);
       #endif
+      handleProcessDir(dirent->d_name);
     } else {
       #if DEBUG
-      printf("not a process dir %s\n", dirent->d_name);
+      // printf("not a process dir %s\n", dirent->d_name);
       #endif
     }
   }
@@ -41,6 +44,39 @@ int main() {
  *
  * Returns true if valid process directory
  */
-bool isProcessDirectory(const struct dirent *dirent) {
+bool isProcessDir(const struct dirent *dirent) {
   return dirent->d_type == DT_DIR && strtol(dirent->d_name, NULL, 0);
+}
+
+/**
+ * Puts together the full path of the status file
+ */
+void handleProcessDir(const char *dirName) {
+  char fullPath[20];
+  strcpy(fullPath, "/proc/");
+  strcat(fullPath, dirName);
+  strcat(fullPath, "/status");
+
+  printf("fullPath %s \n", fullPath);
+
+  openStatusFile(fullPath);
+}
+
+/**
+ * Opens the status file at the given path.
+ */
+void openStatusFile(const char *fullPath) {
+  FILE *statusFile;
+  char line[128];
+
+  if ((statusFile = fopen(fullPath, "r")) == NULL) {
+    printf("unable to open status file %s", fullPath);
+    exit(1);
+  }
+
+  while(fgets(line, sizeof line, statusFile) != NULL) {
+    printf("line %s", line);
+  }
+    
+  fclose(statusFile);
 }
